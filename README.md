@@ -14,11 +14,12 @@ The solution to this problem would be a talking coaster. The coaster would speak
 + Load Cell 2kg
 + Dallas DS18B20 Temperature Sensor
 + DFPlayer MP3 Player
++ Smartphone loudspeaker 1W
 + SD Card
 
 ## Features
 + Measure weight
 + Measure temperature
 + Battery operated (Target of minimum of 12 hours)
-+ Play MP3
++ Play MP3 reasonably loud
 + Distinguish between cold and warm drinks
