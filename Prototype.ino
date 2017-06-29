@@ -21,6 +21,9 @@
 //        back onto the coaster, how to implement a reminder to notify
 //        the user to return the cup on the coaster
 
+// TODO - Consider adding second DS18B20 temperature sensor to calculate
+//        the time for the drink to cool with higher precision
+
 #include "hx711.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -138,7 +141,7 @@ void setup() {
   // -------------
   sensors.begin();
 
-  // read initial temperature
+  // Read initial temperature
   sensors.requestTemperatures();
   previousTemperature = (double)sensors.getTempCByIndex(0);
   Serial.println(F("DS18B20 ready"));
