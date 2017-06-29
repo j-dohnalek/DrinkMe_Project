@@ -27,6 +27,10 @@
 // TODO - How to handle the gap between the drinking and putting it back
 //        onto the coaster. How long? What is the procedure?
 
+// TODO - Consider https://github.com/bogde/HX711 library with the ability
+//        to send the HX711 chip to lower power
+
+
 #include "hx711.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -35,18 +39,10 @@
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
-// General configuration variables
-// -------------------------------
-
-// The initial volume for the MP3 Player module
-int initialVolume = 28;
-
-// Provides access to the millis() override function
-extern volatile unsigned long timer0_millis;
-
 
 // MP3 Player configuration
 // ------------------------
+
 SoftwareSerial dftPlayerSoftwareSerial(10, 11); // RX, TX
 DFRobotDFPlayerMini DFPlayer;
 void printDetail(uint8_t type, int value);
@@ -58,54 +54,53 @@ void printDetail(uint8_t type, int value);
 // t0 = surrounding temperature
 // t1 = initial liquid temperature
 // t2 = desired temperature of the liquid
-// t = time it takes to reach target temperature
-const double k = 0.056;
-
-// TODO add second temperature sensor to
-// monitor the room temperature to replace the
-// variable t0 with the data from the sensor
 double t0=23.00, t1=95.00, t2=48.00;
 
+// Constant to use for the calculation
+const double k = 0.056;
+
 // Arduino implementation
+// t -> time it takes to reach target temperature
 // t = (-1.0/k) * log((t2-t0)/(t1-t0))
 
 
-// DS18B20 Settings
+// DS18B20 configuration
 // ----------------
+
 #define ONE_WIRE_BUS 2
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
 
-// Load Cell
-// ---------
+// Load cell configuration
+// -----------------------
+
 Hx711 scale(A1, A0);
 
-// 1) Place nothing on the scale, then run the example code,
-// which means reset your arduino that runs the example
-// code above.
-// 2) Record the output. that is the offset.
-// 3) Place a stand weight, like 1kg(1000g), record the output as w.
-// 4) Do the math
-// ratio = (w - offset) / 1000
-// ratio = (7754789 - 8277286) / 500 = -1045
-// 5) Go to setup and edit the
-// scale.setOffset( <insert offset> );
-// scale.setScale( <insert ratio> );
+// Calibration process:
+// https://github.com/aguegu/ardulibs/tree/master/hx711
 long loadCellOffset = 8277286;
 float loadCellRatio = -1045;
 
 
-// Miscelaneous
-// ------------
+// Miscelaneous variables
+// ----------------------
 
-// stores the temperature measurement from the
-// previous temperature reading for comparison
+
+// Provides access to reset the millis() function
+extern volatile unsigned long timer0_millis;
+
+
+// The initial volume for the MP3 Player module
+int initialVolume = 28;
+
+
+// Stores the temperature measurement from the previous temperature reading
+// for comparison
 double previousTemperature = 0; // degree C
 
 
-// The temperature have rissen above the defined
-// temperature causes action start
+// The temperature have rissen above the defined temperature causes action start
 double temperatureRise = 1.5; // degree C
 
 
@@ -289,7 +284,7 @@ void coldDrinkSubRoutine(){
     Serial.println(F("Wait 15 minutes"));
 	  // Delay the notification between the drinks
     resetMillisAndDelay(delayBetweenColdDrinks);
-    
+
     // Update the latest cup weight
     cupWeight = (int)round(scale.getGram());
     Serial.print(F("Last measured weight: "));
@@ -350,7 +345,7 @@ int handleEmptyPlatform(int weight){
   // Check if the cup is on the platform
   while(weight < minimumWeightOnPlatform){
 
-    Serial.println(F("Reminding the user to put the drink back onto the coaster"));
+    Serial.println(F("Reminding user to put the drink back onto the coaster"));
     // Play the notification sound before the reminder
     DFPlayer.play(3);
     resetMillisAndDelay(3000);
