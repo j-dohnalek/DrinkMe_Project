@@ -13,3 +13,10 @@ The solution to this problem would be a talking coaster. The coaster would speak
 + Dallas DS18B20 Temperature Sensor
 + DFPlayer MP3 Player
 + SD Card
+
+## Features
++ Measure weight
++ Measure temperature
++ Battery operated (Target of minimum of 12 hours)
++ Play MP3
++ Distinguish between cold and warm drinks
