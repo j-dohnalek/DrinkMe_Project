@@ -7,6 +7,8 @@ One of the issues for people with dementia is the limited short term memory capa
 ## Proposed Solution
 The solution to this problem would be a talking coaster. The coaster would speak to the person reminding them to drink. The product would support handling of drinking cold and warm drinks.
 
+![alt text](https://github.com/learn2develop/DrinkMe/blob/master/Circuit%20v1.jpg "Circuit")
+
 ## Hardware List
 + Arduino Nano
 + Load Cell 2kg
