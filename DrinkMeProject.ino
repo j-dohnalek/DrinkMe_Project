@@ -116,7 +116,7 @@ int minimumWeightOnPlatform = 50; // grams
 // The cup will loose on weight as the person drink from the cup the target
 // reduction of the cup is to decrease the weight by 30% which is reasonable
 // portion of the liquid in the mug, or glass
-float cupWeightReduction = 0.3;
+float drinkWeightReduction = 0.3;
 
 
 // One cycle - check the weight and temperature determine if there is a
@@ -136,32 +136,43 @@ unsigned long delayBetweenColdDrinks = 900000;
 
 void setup() {
 
-  // Start communicatio over serial
+  // Start communication over serial for debuging
   Serial.begin(115200);
-  dftPlayerSoftwareSerial.begin(9600);
+
 
   // Start the communication with the MP3 Player
   // -------------------------------------------
-  Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+
+  Serial.println(F("Initializing DFPlayer"));
+  // Start communication over serial with DFPlayer
+  dftPlayerSoftwareSerial.begin(9600);
+
   if (!DFPlayer.begin(dftPlayerSoftwareSerial)) {
     Serial.println(F("Unable to begin DFPlayer"));
     while(true);
   }
+
   Serial.println(F("DFPlayer Mini Active."));
+  // Set the volume
   DFPlayer.volume(initialVolume);
+
+
   Serial.println(F("Setting up device DS18B20 and Load Cell"));
 
-  // Start DS18B20
-  // -------------
+  // Start the communication with DS18B20
+  // ------------------------------------
+
   sensors.begin();
+  Serial.println(F("DS18B20 ready"));
 
   // Read initial temperature
   sensors.requestTemperatures();
   previousTemperature = (double)sensors.getTempCByIndex(0);
-  Serial.println(F("DS18B20 ready"));
 
-  // Read Load Cell
-  // --------------
+
+  // Start communication to the load Cell
+  // ------------------------------------
+
   scale.setOffset(loadCellOffset);
   scale.setScale(loadCellRatio);
   Serial.println(F("Load Cell ready"));
@@ -174,43 +185,31 @@ void setup() {
 
 void loop() {
 
-  // --------------
-  // Read Load Cell
-
-  int cupWeight = (int)round(scale.getGram());
+  // Obtain latest temperature
+  int drinkWeight = (int)round(scale.getGram());
 
   Serial.print(F("weight="));
-  Serial.print(cupWeight);
-  Serial.println(F("g"));
-
-  // Read DS18B20
-  // ------------
+  Serial.print(drinkWeight);
 
   // Send the command to get temperature
   sensors.requestTemperatures();
+
+  // Obtain latest temperature
   double currentTemp = (double)sensors.getTempCByIndex(0);
 
-  //--------------------------------
-  // place the code to react on
-  // temperature change between tags
-
+  // Calculte the temperature difference between now and previous cycle
   double temperatureDifference = currentTemp - previousTemperature;
-
-  Serial.print(F("temperature (diff.)="));
-  Serial.print(temperatureDifference);
-  Serial.println(F("C"));
 
   Serial.print(F("temperature (act.)="));
   Serial.print(currentTemp);
-  Serial.println(F("C"));
-  Serial.println(F("-------"));
 
+  Serial.print(F("temperature (diff.)="));
+  Serial.print(temperatureDifference);
 
   // Threshold to trigger the start of the subroutines
-  if(cupWeight > triggerWeight){
+  if(drinkWeight > triggerWeight){
 
-    // If there is a rise in temperature, then the hot drink sits on top of the
-    // platform start warm drink subroutine
+    // If there is a rise in temperature, between the previous reading and
     if(temperatureDifference > temperatureRise){
       Serial.println(F("Started warm drink subroutine"));
       warmDrinkSubRoutine();
@@ -222,8 +221,11 @@ void loop() {
     }
   }
 
-  //--------------------------------
+  // Record the current temperature on the end of the cycle to monitor the
+  // temperature difference for controlling the hot or cold drink
   previousTemperature = currentTemp;
+
+  Serial.println(F("---|CYCLE END|---"));
 
   // In order to save power run the device one time every x times every minute.
   resetMillisAndDelay(oneCycle);
@@ -231,11 +233,11 @@ void loop() {
 
 void warmDrinkSubRoutine(){
 
-  int cupWeight = (int)round(scale.getGram());
+  int drinkWeight = (int)round(scale.getGram());
 
   // The cup will loose on weight as the person drink from the cup
   // the target reduction of the cup is to decrease the weight by 40%
-  int targetCupWeight = (int)(cupWeight * (1-cupWeightReduction));
+  int targetdrinkWeight = (int)(drinkWeight * (1-drinkWeightReduction));
 
   // calculate the delay until the drink will be in the
   // ideal temperature according to newton laws of cooling
@@ -257,26 +259,26 @@ void warmDrinkSubRoutine(){
 void coldDrinkSubRoutine(){
 
   // Update the weight of the cup
-  int cupWeight = (int)round(scale.getGram());
+  int drinkWeight = (int)round(scale.getGram());
 
   // Target weight to stop the subroutine
-  int targetCupWeight = (int)(cupWeight * (1-cupWeightReduction));
+  int targetdrinkWeight = (int)(drinkWeight * (1-drinkWeightReduction));
 
   Serial.print(F("Target cup weight: "));
-  Serial.println(targetCupWeight);
+  Serial.println(targetdrinkWeight);
 
   while(true){
 
     // Get the most updated weight of the cup and also handle
     // when the user did not returned the cup onto the platform
-    cupWeight = handleEmptyPlatform((int)round(scale.getGram()));
+    drinkWeight = handleEmptyPlatform((int)round(scale.getGram()));
 
     Serial.print(F("Last measured weight: "));
-    Serial.println(cupWeight);
+    Serial.println(drinkWeight);
 
     // Stop the subroutine when the person have met the required target but
     // the cup is still on the the coaster
-    if(cupWeight <= targetCupWeight && cupWeight > minimumWeightOnPlatform){
+    if(drinkWeight <= targetdrinkWeight && drinkWeight > minimumWeightOnPlatform){
       Serial.println(F("End of cold drinking sequence"));
       return;
     }
@@ -286,13 +288,13 @@ void coldDrinkSubRoutine(){
     resetMillisAndDelay(delayBetweenColdDrinks);
 
     // Update the latest cup weight
-    cupWeight = (int)round(scale.getGram());
+    drinkWeight = (int)round(scale.getGram());
     Serial.print(F("Last measured weight: "));
-    Serial.println(cupWeight);
+    Serial.println(drinkWeight);
 
     // stop the subroutine when the person have met the required target but
     // the cup is still on the the coaster
-    if(cupWeight <= targetCupWeight && cupWeight > minimumWeightOnPlatform){
+    if(drinkWeight <= targetdrinkWeight && drinkWeight > minimumWeightOnPlatform){
       Serial.println(F("End of cold drinking sequence"));
       return;
     }
@@ -318,10 +320,10 @@ void coldDrinkSubRoutine(){
       // Measure the weight of the cup
       // The user have picked up the cup from the platform if the
       // weight recorded on the platform is less than 50g
-      cupWeight = (int)round(scale.getGram());
+      drinkWeight = (int)round(scale.getGram());
       Serial.print(F("Last measured weight: "));
-      Serial.println(cupWeight);
-      if(cupWeight < 50){
+      Serial.println(drinkWeight);
+      if(drinkWeight < 50){
         Serial.println(F("Drinking detected..."));
         break;
       }
