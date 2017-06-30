@@ -8,7 +8,7 @@ One of the issues for people with dementia is the limited short term memory capa
 ## Proposed Solution
 The solution to this problem would be a talking coaster. The coaster would speak to the person reminding them to drink.
 
-![Circuit](https://github.com/learn2develop/DrinkMe/blob/master/Circuit.png "Circuit")
+![Circuit](https://github.com/learn2develop/DrinkMe/blob/master/Hardware/Circuit.png "Circuit")
 
 ## Sound Files
 + 001.mp3 - Spoken text "Please put the drink back onto the coaster"
