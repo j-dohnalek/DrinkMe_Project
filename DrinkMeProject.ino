@@ -52,9 +52,12 @@ void printDetail(uint8_t type, int value);
 // ----------------------
 
 // t0 = surrounding temperature
-// t1 = initial liquid temperature
-// t2 = desired temperature of the liquid
-double t0=23.00, t1=95.00, t2=48.00;
+// TODO add second temperature sensor to obtain surrounding temperature
+double t0=23.00;
+// t1 = initial liquid temperature (estimate)
+double t1=95.00
+// t2 = desired temperature of the liquid (estimate)
+double t2=48.00;
 
 // Constant to use for the calculation
 const double k = 0.056;
@@ -86,13 +89,14 @@ float loadCellRatio = -1045;
 // Miscelaneous variables
 // ----------------------
 
-
-// Provides access to reset the millis() function
-extern volatile unsigned long timer0_millis;
+// Define 1 second
+#define SECOND 1000UL
+// Define 1 minute
+#define MINUTE (SECOND * 60UL)
 
 
 // The initial volume for the MP3 Player module
-int initialVolume = 28;
+int initialVolume = 30;
 
 
 // Stores the temperature measurement from the previous temperature reading
@@ -100,11 +104,14 @@ int initialVolume = 28;
 double previousTemperature = 0; // degree C
 
 
-// The temperature have rissen above the defined temperature causes action start
+// Temperature difference between 1 full cycle measurements. The warm drink will 
+// increase the measured temperature in one cycle above the value in the variable
+// triggering warm drink sub-process
 double temperatureRise = 1.5; // degree C
 
 
-// The weight on the platform is above threshold
+// The weight measured by the load cell has to exceed the trigger weight in order
+// to start further sub-processes
 int triggerWeight = 350; // grams
 
 
@@ -121,13 +128,13 @@ float drinkWeightReduction = 0.3;
 
 // One cycle - check the weight and temperature determine if there is a
 // weight on the platform
-unsigned long oneCycle = 60000; // 60 seconds
+unsigned long oneCycle = MINUTE;
 
 
-// Assuming if the drink is cold it is reasonable to assume that a person
+// Assuming if the drink is cold it is reasonable that a person
 // should drink every 15 min until the cup until the target is met
-// 15 * 60 * 1000
-unsigned long delayBetweenColdDrinks = 900000;
+// validation will come later in the product development
+unsigned long delayBetweenColdDrinks = 15 * MINUTE;
 
 
 // --------------
@@ -228,7 +235,7 @@ void loop() {
   Serial.println(F("---|CYCLE END|---"));
 
   // In order to save power run the device one time every x times every minute.
-  resetMillisAndDelay(oneCycle);
+  delay(oneCycle);
 }
 
 void warmDrinkSubRoutine(){
@@ -242,7 +249,7 @@ void warmDrinkSubRoutine(){
   // calculate the delay until the drink will be in the
   // ideal temperature according to newton laws of cooling
   int calculatedDelay = (int) ((-1.0/k) * log((t2-t0)/(t1-t0)))* 1000;
-  resetMillisAndDelay(calculatedDelay);
+  delay(calculatedDelay);
 
   // Start the cold subroutine with initial reminder to drink
 
@@ -285,7 +292,7 @@ void coldDrinkSubRoutine(){
 
     Serial.println(F("Wait 15 minutes"));
 	  // Delay the notification between the drinks
-    resetMillisAndDelay(delayBetweenColdDrinks);
+    delay(delayBetweenColdDrinks);
 
     // Update the latest cup weight
     drinkWeight = (int)round(scale.getGram());
@@ -304,18 +311,18 @@ void coldDrinkSubRoutine(){
       Serial.println(F("Reminding the user to drink"));
       // Play the sound before voice command
       DFPlayer.play(3);
-      resetMillisAndDelay(3000);
+      delay(3 * SECOND);
 
       // Play the sound of the voice command
       // to remind the user to drink
       DFPlayer.play(2);
-      resetMillisAndDelay(6000);
+      delay(6 * SECOND);
       DFPlayer.stop();
 
       Serial.println(F("Waiting for user to pick up the cup"));
       // Wait small amount of time for the user
       // to pick up the cup from the platform
-      resetMillisAndDelay(5000);
+      delay(5 * SECOND);
 
       // Measure the weight of the cup
       // The user have picked up the cup from the platform if the
@@ -342,7 +349,7 @@ void coldDrinkSubRoutine(){
 int handleEmptyPlatform(int weight){
 
   // Let the user enjoy the drink and not to rush him
-  resetMillisAndDelay(5000);
+  delay(5 * SECOND);
 
   // Check if the cup is on the platform
   while(weight < minimumWeightOnPlatform){
@@ -350,18 +357,18 @@ int handleEmptyPlatform(int weight){
     Serial.println(F("Reminding user to put the drink back onto the coaster"));
     // Play the notification sound before the reminder
     DFPlayer.play(3);
-    resetMillisAndDelay(3000);
+    delay(3 * SECOND);
 
     // Play the text to remind the user to put the cup back onto the coaster
     DFPlayer.play(1);
-    resetMillisAndDelay(3000);
+    delay(3 * SECOND);
 
     // Stop the MP3 Player
     DFPlayer.stop();
 
     // Do not to rush the user to put the drink back onto the platform quickly
     // before reminding him again
-    resetMillisAndDelay(5000);
+    delay(5 * SECOND);
 
     // Remeasure the weight
     weight = (int)round(scale.getGram());
@@ -373,30 +380,4 @@ int handleEmptyPlatform(int weight){
   }
 
   return weight;
-}
-
-
-/*
- * Set the millis value to avoid the the bug when
- * the millis runs over max int and resets itself to zero
- * preventing issues with long delays in the code
- *
- * @param new_milis, new value that will override the milliseconds
- */
-void setMillis(unsigned long new_millis){
-  uint8_t oldSREG = SREG;
-  cli();
-  timer0_millis = new_millis;
-  SREG = oldSREG;
-}
-
-
-/*
- * Includes the ability to reset the milis
- * and execute the delay
- * @param milisecondDelay, how long to delay for
- */
-void resetMillisAndDelay(unsigned long milisecondDelay){
-  setMillis(0);
-  delay(milisecondDelay);
 }
