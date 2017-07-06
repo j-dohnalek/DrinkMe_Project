@@ -21,16 +21,21 @@ The solution to this problem would be a talking coaster. The coaster would speak
 + https://github.com/DFRobot/DFRobotDFPlayerMini/archive/1.0.1.zip
 
 ## Hardware List
+### 1st stage prototype
 + Arduino Nano
 + Load Cell 2kg
 + Dallas DS18B20 Temperature Sensor
 + DFPlayer MP3 Player
 + Smartphone loudspeaker 1W
-+ SD Card
++ Micro SD Card
+### 2nd stage of the prototype addition
++ DC to DC Step up converter (3.7 to 5V, 800mA to 1000mA)
++ Lipo battery charger
++ 500mAh 3.7V battery
 
 ## Features
 + Measure weight
-+ Measure temperature
++ Measure temperature under the cup and around the environment
 + Battery operated (Target of minimum of 12 hours)
 + Play MP3 reasonably loud
 + Distinguish between cold and warm drinks
