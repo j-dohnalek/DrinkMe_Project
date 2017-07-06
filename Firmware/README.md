@@ -14,3 +14,34 @@
 + Battery operated (Target of minimum of 12 hours)
 + Play MP3 reasonably loud
 + Distinguish between cold and warm drinks
+
+## Global Variables
+
+```C
+// Temperature difference between 1 full cycle measurements. The warm drink will 
+// increase the measured temperature in one cycle above the value in the variable
+// triggering warm drink sub-process
+double temperatureRise = 1.5; // degree C
+
+// The weight measured by the load cell has to exceed the trigger weight in order
+// to start further sub-processes
+int triggerWeight = 350; // grams
+
+// The minimum weight on the platform after which the platform is considerate
+// as empty
+int minimumWeightOnPlatform = 50; // grams
+
+// The cup will loose on weight as the person drink from the cup the target
+// reduction of the cup is to decrease the weight by 30% which is reasonable
+// portion of the liquid in the mug, or glass
+float drinkWeightReduction = 0.3;
+
+// One cycle - check the weight and temperature determine if there is a
+// weight on the platform
+unsigned long oneCycle = MINUTE;
+
+// Assuming if the drink is cold it is reasonable that a person
+// should drink every 15 min until the cup until the target is met
+// validation will come later in the product development
+unsigned long delayBetweenColdDrinks = 15 * MINUTE;
+```
