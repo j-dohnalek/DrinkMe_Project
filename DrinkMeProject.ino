@@ -55,7 +55,7 @@ void printDetail(uint8_t type, int value);
 // TODO add second temperature sensor to obtain surrounding temperature
 double t0=23.00;
 // t1 = initial liquid temperature (estimate)
-double t1=95.00
+double t1=95.00;
 // t2 = desired temperature of the liquid (estimate)
 double t2=48.00;
 
