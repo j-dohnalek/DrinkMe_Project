@@ -3,7 +3,7 @@
 + https://github.com/milesburton/Arduino-Temperature-Control-Library
 + https://github.com/DFRobot/DFRobotDFPlayerMini/archive/1.0.1.zip
 
-## Two DS18B20 temperature sensors
+## DS18B20 temperature sensors
 + index 0: DS18B20 for external temperature
 + index 1: DS18B20 leading to the upper platform
 
