@@ -51,11 +51,10 @@ void printDetail(uint8_t type, int value);
 // Newton laws of cooling
 // ----------------------
 
-// t0 = surrounding temperature
-// TODO add second temperature sensor to obtain surrounding temperature
-double t0=23.00;
+// t0 = (DS18B20) surrounding temperature
+double t0; 
 // t1 = initial liquid temperature (estimate)
-double t1=95.00;
+double t1=80.00;
 // t2 = desired temperature of the liquid (estimate)
 double t2=48.00;
 
@@ -89,8 +88,11 @@ float loadCellRatio = -1045;
 // Miscelaneous variables
 // ----------------------
 
+
 // Define 1 second
 #define SECOND 1000UL
+
+
 // Define 1 minute
 #define MINUTE (SECOND * 60UL)
 
@@ -174,7 +176,7 @@ void setup() {
 
   // Read initial temperature
   sensors.requestTemperatures();
-  previousTemperature = (double)sensors.getTempCByIndex(0);
+  previousTemperature = (double)sensors.getTempCByIndex(1);
 
 
   // Start communication to the load Cell
@@ -195,23 +197,23 @@ void loop() {
   // Obtain latest temperature
   int drinkWeight = (int)round(scale.getGram());
 
-  Serial.print(F("weight="));
+  Serial.print(F("w="));
   Serial.print(drinkWeight);
 
   // Send the command to get temperature
   sensors.requestTemperatures();
 
   // Obtain latest temperature
-  double currentTemp = (double)sensors.getTempCByIndex(0);
+  double currentTemp = (double)sensors.getTempCByIndex(1);
 
   // Calculte the temperature difference between now and previous cycle
   double temperatureDifference = currentTemp - previousTemperature;
 
-  Serial.print(F("temperature (act.)="));
+  Serial.print(F("  t (act.)="));
   Serial.print(currentTemp);
 
-  Serial.print(F("temperature (diff.)="));
-  Serial.print(temperatureDifference);
+  Serial.print(F("  t (diff.)="));
+  Serial.println(temperatureDifference);
 
   // Threshold to trigger the start of the subroutines
   if(drinkWeight > triggerWeight){
@@ -220,11 +222,13 @@ void loop() {
     if(temperatureDifference > temperatureRise){
       Serial.println(F("Started warm drink subroutine"));
       warmDrinkSubRoutine();
+      Serial.println(F("End of warm drinking sequence"));
     }
     // Otherwise drink is cold, start cold subroutine
     else{
       Serial.println(F("Started cold drink subroutine"));
       coldDrinkSubRoutine();
+      Serial.println(F("End of cold drinking sequence"));
     }
   }
 
@@ -232,7 +236,7 @@ void loop() {
   // temperature difference for controlling the hot or cold drink
   previousTemperature = currentTemp;
 
-  Serial.println(F("---|CYCLE END|---"));
+  Serial.println(F("-- |CYCLE END| --"));
 
   // In order to save power run the device one time every x times every minute.
   delay(oneCycle);
@@ -245,6 +249,9 @@ void warmDrinkSubRoutine(){
   // The cup will loose on weight as the person drink from the cup
   // the target reduction of the cup is to decrease the weight by 40%
   int targetdrinkWeight = (int)(drinkWeight * (1-drinkWeightReduction));
+    
+  // external temperature
+  t0 = (double)sensors.getTempCByIndex(0);
 
   // calculate the delay until the drink will be in the
   // ideal temperature according to newton laws of cooling
@@ -254,7 +261,7 @@ void warmDrinkSubRoutine(){
   // Start the cold subroutine with initial reminder to drink
 
   while(true){
-
+    break;
   }
 
 }
@@ -302,7 +309,6 @@ void coldDrinkSubRoutine(){
     // stop the subroutine when the person have met the required target but
     // the cup is still on the the coaster
     if(drinkWeight <= targetdrinkWeight && drinkWeight > minimumWeightOnPlatform){
-      Serial.println(F("End of cold drinking sequence"));
       return;
     }
 
@@ -368,7 +374,7 @@ int handleEmptyPlatform(int weight){
 
     // Do not to rush the user to put the drink back onto the platform quickly
     // before reminding him again
-    delay(5 * SECOND);
+    delay(10 * SECOND);
 
     // Remeasure the weight
     weight = (int)round(scale.getGram());
