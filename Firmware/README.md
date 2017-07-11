@@ -4,8 +4,8 @@
 + https://github.com/DFRobot/DFRobotDFPlayerMini/archive/1.0.1.zip
 
 ## Two DS18B20 temperature sensors
-+Index 0: DS18B20 for external temperature
-+Index 1: DS18B20 leading to the upper platform
++ index 0: DS18B20 for external temperature
++ index 1: DS18B20 leading to the upper platform
 
 ## Sound Files
 Generated using http://www.fromtexttospeech.com/
