@@ -31,7 +31,7 @@
 //        to send the HX711 chip to lower power
 
 
-#include "hx711.h"
+#include <hx711.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <math.h>
@@ -45,8 +45,6 @@
 
 SoftwareSerial dftPlayerSoftwareSerial(10, 11); // RX, TX
 DFRobotDFPlayerMini DFPlayer;
-void printDetail(uint8_t type, int value);
-
 
 // Newton laws of cooling
 // ----------------------
@@ -144,6 +142,7 @@ unsigned long delayBetweenColdDrinks = 15 * MINUTE;
 // --------------
 
 void setup() {
+
 
   // Start communication over serial for debuging
   Serial.begin(115200);
@@ -255,8 +254,18 @@ void warmDrinkSubRoutine(){
 
   // calculate the delay until the drink will be in the
   // ideal temperature according to newton laws of cooling
-  int calculatedDelay = (int) ((-1.0/k) * log((t2-t0)/(t1-t0)))* 1000;
-  delay(calculatedDelay);
+  unsigned long coolingDelay = (unsigned long) ((-1.0/k) * log((t2-t0)/(t1-t0))) * 1000;
+  delay(coolingDelay);
+
+  Serial.println(F("Reminding the user to drink"));
+  // Play the sound before voice command
+  DFPlayer.play(3);
+  delay(3 * SECOND);
+
+  // Play the sound of the voice command to remind the user to drink
+  DFPlayer.play(2);
+  delay(6 * SECOND);
+  DFPlayer.stop();
 
   // Start the cold subroutine with initial reminder to drink
 
@@ -283,9 +292,8 @@ void coldDrinkSubRoutine(){
 
   while(true){
 
-    // Get the most updated weight of the cup and also handle
-    // when the user did not returned the cup onto the platform
-    drinkWeight = handleEmptyPlatform((int)round(scale.getGram()));
+    // Measure the weight of the cup
+    drinkWeight = (int)round(scale.getGram());
 
     Serial.print(F("Last measured weight: "));
     Serial.println(drinkWeight);
@@ -319,8 +327,7 @@ void coldDrinkSubRoutine(){
       DFPlayer.play(3);
       delay(3 * SECOND);
 
-      // Play the sound of the voice command
-      // to remind the user to drink
+      // Play the sound of the voice command to remind the user to drink
       DFPlayer.play(2);
       delay(6 * SECOND);
       DFPlayer.stop();
@@ -328,7 +335,7 @@ void coldDrinkSubRoutine(){
       Serial.println(F("Waiting for user to pick up the cup"));
       // Wait small amount of time for the user
       // to pick up the cup from the platform
-      delay(5 * SECOND);
+      delay(10 * SECOND);
 
       // Measure the weight of the cup
       // The user have picked up the cup from the platform if the
@@ -336,8 +343,19 @@ void coldDrinkSubRoutine(){
       drinkWeight = (int)round(scale.getGram());
       Serial.print(F("Last measured weight: "));
       Serial.println(drinkWeight);
-      if(drinkWeight < 50){
+      
+      if(drinkWeight < minimumWeightOnPlatform){
+        
         Serial.println(F("Drinking detected..."));
+        
+        // Give time to the user to drink the beverage
+        delay(30 * SECOND);
+
+        drinkWeight = (int)round(scale.getGram());
+
+        // Handle when the user did not returned the cup onto the platform
+        handleEmptyPlatform(drinkWeight);
+
         break;
       }
     }
@@ -352,10 +370,7 @@ void coldDrinkSubRoutine(){
  *
  * @param weight, latest weight reading
  */
-int handleEmptyPlatform(int weight){
-
-  // Let the user enjoy the drink and not to rush him
-  delay(5 * SECOND);
+void handleEmptyPlatform(int weight){
 
   // Check if the cup is on the platform
   while(weight < minimumWeightOnPlatform){
@@ -372,18 +387,12 @@ int handleEmptyPlatform(int weight){
     // Stop the MP3 Player
     DFPlayer.stop();
 
-    // Do not to rush the user to put the drink back onto the platform quickly
-    // before reminding him again
-    delay(10 * SECOND);
-
-    // Remeasure the weight
-    weight = (int)round(scale.getGram());
-
     // User have placed the cup back onto the platform
-    if(weight > minimumWeightOnPlatform){
-      return weight;
+    if((int)round(scale.getGram()) > minimumWeightOnPlatform){
+      return;
+    }
+    else{
+      delay(10 * SECOND);
     }
   }
-
-  return weight;
 }
