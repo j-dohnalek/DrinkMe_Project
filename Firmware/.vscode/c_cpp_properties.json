@@ -19,8 +19,7 @@
                     "/usr/include/c++/5",
                     "/usr/local/include",
                     "/usr/include/x86_64-linux-gnu",
-                    "/usr/include",
-                    "/opt/Arduino/arduino-1.8.3/libraries/HX11/hx711.h"
+                    "/usr/include"
                 ],
                 "limitSymbolsToIncludedHeaders": false,
                 "databaseFilename": ""
